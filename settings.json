@@ -1,0 +1,32 @@
+{
+  // ---------------------- Go 核心设置 ----------------------
+  "go.toolsManagement.autoUpdate": true,
+  "go.useLanguageServer": true,
+  "gopls": {
+    "formatting.gofumpt": true,           // 更严格的格式化（推荐）
+    "formatting.local": "github.com/Kaislyn", // 例如 "github.com/你的名字" 或公司域名
+    "ui.semanticTokens": true,            // 更漂亮的语法高亮（2024年后强烈推荐）
+    "ui.completion.completeFunctionCalls": true,
+    "ui.diagnostic.annotations": {
+      "bounds": true,
+      "escape": true,
+      "inline": true,
+      "nil": true
+    }
+  },
+
+  // ---------------------- 保存时自动操作 ----------------------
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit",   // 自动整理 import
+    "source.fixAll": true                    // 自动修复能修的问题
+  },
+
+  // ---------------------- 其他舒适设置 ----------------------
+  "editor.fontFamily": "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+  "editor.fontLigatures": true,
+  "editor.fontSize": 14.5,
+  "terminal.integrated.fontFamily": "'JetBrains Mono', monospace",
+  "go.testFlags": ["-v", "-race"],           // 测试时默认带 race 检测
+  "go.coverOnTestPackages": true             // 测试覆盖率显示
+}
