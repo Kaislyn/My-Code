@@ -1,3 +1,5 @@
+// 分治
+
 #include <iostream>
 #include <string>
 #include <vector>
