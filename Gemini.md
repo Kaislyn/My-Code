@@ -1,116 +1,513 @@
-太棒了！你能在一经点拨后迅速把 DFS 的“现场恢复”和“方向试探”写得这么标准，说明你的编程语感非常好。找到手感是学算法最重要的一环。
+# 搜索题 12 道核心模板题全集（含最优代码与核心优化）
 
-既然 DFS（深度优先搜索）的骨架你已经搭好了，现在我们来认识它的兄弟：**BFS（广度优先搜索）**。
+## 🟢 第一阶段：基础搜索与回溯（必拿分模板）
 
-### 一、 核心思想：水波纹与排队买票
+### 1️⃣ 全排列（DFS 基础模板）
+**题目描述**：给定 $n$ 个不同整数，输出它们的所有排列。
+**思路解析**：
 
-如果说 DFS 的精髓是“一条路走到黑，撞墙再回头”（像走迷宫的单人探险），那么 BFS 的精髓就是**“像水波纹一样，一层一层往外扩散”**。
-
-
-
-**蓝桥杯必考法则：**
-* **DFS** 擅长回答：“有多少种方案？”、“能不能走到终点？”（穷举所有可能）。
-* **BFS** 极其擅长回答一个核心问题：**“走到终点的最短步数是多少？”**
-
-因为 BFS 是一圈一圈往外找的，所以**它第一次碰到终点的时候，走过的路程绝对是最短的**。
-
-### 二、 BFS 的核心武器：队列 (Queue)
-
-DFS 我们利用了递归（实际上是系统帮我们用了**栈**）。而写 BFS，我们不再需要递归，我们需要用到 C++ STL 里的神器：**队列（`queue`）**。
-
-队列的规则很简单：**先进先出（排队买票）**。
-1. 把起点加入队列。
-2. 只要队列不为空，就把排在最前面的人叫出来。
-3. 看看这个人能不能往上下左右走。如果能走，就把他能走到的新位置，**排到队列的最后面**去。
-4. 重复这个过程，直到队列空了，或者找到终点了。
-
-### 三、 BFS 的万能模板（二维迷宫版）
-
-为了让你直观感受，我用我们刚才写过的“二维迷宫”作为背景，给你写一个 BFS 求“最短路径”的模板。
-
-你需要先定义一个结构体来保存坐标和当前的步数，然后引入 `<queue>` 头文件。
+经典的回溯思想。将寻找排列看作在树上往下走，`used[]` 数组是“备忘录”，记录当前路径哪些数字已用。到底部时收集结果，核心在于**回溯时的“恢复现场”**。
+**复杂度**：时间 $O(n \times n!)$，空间 $O(n)$。
 
 ```cpp
-#include <iostream>
-#include <vector>
-#include <queue> // 必须引入队列
-
+#include <bits/stdc++.h>
 using namespace std;
 
-// 1. 定义一个结构体，打包坐标(x, y)和走到这步的步数(step)
-struct Node {
-    int x, y, step;
-};
+int n;
+vector<int> nums, path;
+bool used[10];
 
-int dx[] = {-1, 1, 0, 0}, dy[] = {0, 0, -1, 1};
-vector<vector<int>> map;
-vector<vector<int>> mark;
-int n, m;
-
-// BFS 不需要递归！
-void bfs(int start_x, int start_y) {
-    queue<Node> q; // 创建一个队列
-    
-    // 2. 起点入队，并打上标记
-    q.push({start_x, start_y, 0}); // 起点步数为 0
-    mark[start_x][start_y] = 1;    // 【核心铁律】只要进了队列，立刻打标记！
-    
-    // 3. 开始“波纹扩散”，只要队列里还有人就继续
-    while (!q.empty()) {
-        // 把排在最前面的节点拿出来作为当前点
-        Node current = q.front(); 
-        q.pop(); // 拿出来后，让它出队
-        
-        // 如果当前点就是终点，直接输出步数，结束！(这绝对是最短的)
-        if (current.x == n - 1 && current.y == m - 1) {
-            cout << "最短步数是: " << current.step << endl;
-            return;
-        }
-        
-        // 4. 探索当前点的上下左右 4 个方向
-        for (int i = 0; i < 4; i++) {
-            int newx = current.x + dx[i];
-            int newy = current.y + dy[i];
-            
-            // 越界检查
-            if (newx < 0 || newy < 0 || newx >= n || newy >= m) continue;
-            // 墙壁和已访问检查
-            if (map[newx][newy] == 1 || mark[newx][newy] == 1) continue;
-            
-            // 5. 发现新大陆！新位置入队，步数是当前步数 + 1
-            q.push({newx, newy, current.step + 1});
-            
-            // 【重点】BFS 绝对不需要回溯取消标记！走过就是走过了！
-            mark[newx][newy] = 1; 
+void dfs() {
+    if(path.size() == n) {
+        for(int v : path) cout << v << " ";
+        cout << "\n";
+        return;
+    }
+    for(int i = 0; i < n; i++){
+        if(!used[i]){
+            used[i] = true;
+            path.push_back(nums[i]);
+            dfs();
+            path.pop_back(); // 回溯：恢复现场
+            used[i] = false; // 回溯：恢复现场
         }
     }
-    cout << "无法到达终点" << endl;
 }
 
-int main() {
-    // ... 读入 n, m 和 map 的逻辑和 DFS 完全一样 ...
-    // 这里省略读入部分
-    
-    bfs(0, 0); // 从 (0,0) 开始 BFS
-    
+int main(){
+    cin >> n;
+    nums.resize(n);
+    for(int i = 0; i < n; i++) cin >> nums[i];
+    dfs();
     return 0;
 }
 ```
 
+### 2️⃣ 最短路径（BFS 基础模板）
+**题目描述**：$n \times m$ 迷宫，`.` 可走，`#` 障碍，从起点到终点最少步数。
+**思路解析**：
 
+最短路首选 BFS，像水波纹一样向外扩散，先到达的一定是最短的。`dist[][]` 兼顾了“记录步数”和“判重”两个功能。
+**复杂度**：时间 $O(n \times m)$，空间 $O(n \times m)$。
 
-### 四、 BFS 与 DFS 模板的致命差异（避坑指南）
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
 
-请仔细对比这个模板和你刚才写的 DFS，有两点天差地别：
+int n, m;
+char g[20][20];
+int dist[20][20];
+int dx[4] = {0, 0, 1, -1}, dy[4] = {1, -1, 0, 0};
 
-1. **绝对没有回溯（不取消标记）：**
-   DFS 是一个人在走，走不通要退回来，所以需要 `mark[newx][newy] = 0` 来擦除脚印。
-   BFS 是“孙悟空拔猴毛吹出无数个分身”同时走。一个点只要被某个分身踩过了，说明已经找到了到达这个点的最短方法，其他分身就不需要再来了。**所以 BFS 永远不取消标记。**
-2. **打标记的时机（非常容易错）：**
-   在 BFS 中，**一定要在节点 `push` 进队列的瞬间打标记**。千万不能等它被 `pop` 出来的时候再打标记。否则同一个节点可能会被周围的节点重复塞进队列好几次，导致队列爆炸（内存超限）。
+int main(){
+    cin >> n >> m;
+    for(int i = 0; i < n; i++) cin >> g[i];
+    memset(dist, -1, sizeof(dist));
+    
+    queue<pair<int,int>> q;
+    q.push({0, 0});
+    dist[0][0] = 0;
+    
+    while(!q.empty()){
+        auto [x, y] = q.front(); 
+        q.pop();
+        
+        for(int i = 0; i < 4; i++){
+            int nx = x + dx[i], ny = y + dy[i];
+            if(nx >= 0 && nx < n && ny >= 0 && ny < m && g[nx][ny] == '.' && dist[nx][ny] == -1){
+                dist[nx][ny] = dist[x][y] + 1;
+                q.push({nx, ny});
+            }
+        }
+    }
+    cout << dist[n-1][m-1] << "\n";
+    return 0;
+}
+```
 
-### 下一步的安排
+### 3️⃣ 子集问题（DFS 选与不选模型）
+**题目描述**：输出 `{1,2,3}` 的所有子集。
+**思路解析**：面对每一个元素，只有“选”或“不选”两个平行分支，构成二叉搜索树。
 
-现在 BFS 的理论和模板都已经交给你了。
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
 
-你是想先自己把这段 BFS 迷宫代码在 VS Code 里补全并运行一下，看看它是不是真的能求出最短步数；还是我们直接进入“深化阶段”，我给你出一道必须用 BFS 才能拿满分的蓝桥杯变形题练练手？
+vector<int> nums = {1, 2, 3}, path;
+
+void dfs(int idx){
+    if(idx == nums.size()){
+        for(int x : path) cout << x << " ";
+        cout << "\n";
+        return;
+    }
+    dfs(idx + 1); // 分支 1：不选当前元素
+    
+    path.push_back(nums[idx]);
+    dfs(idx + 1); // 分支 2：选当前元素
+    path.pop_back(); // 回溯
+}
+
+int main(){
+    dfs(0);
+    return 0;
+}
+```
+
+### 4️⃣ 八皇后（多维度状态标记）
+**题目描述**：求 $n$ 皇后方案数。
+**思路解析**：
+
+用一维数组标记列。主对角线 `r - c` 为定值（加 $n$ 防负数），副对角线 `r + c` 为定值，实现 $O(1)$ 冲突检测。
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, ans = 0;
+bool col[20], diag1[40], diag2[40];
+
+void dfs(int r){
+    if(r == n){ ans++; return; }
+    for(int c = 0; c < n; c++){
+        if(!col[c] && !diag1[r+c] && !diag2[r-c+n]){
+            col[c] = diag1[r+c] = diag2[r-c+n] = true;
+            dfs(r + 1);
+            col[c] = diag1[r+c] = diag2[r-c+n] = false;
+        }
+    }
+}
+
+int main(){
+    cin >> n;
+    dfs(0);
+    cout << ans << "\n";
+    return 0;
+}
+```
+
+---
+
+## 🟡 第二阶段：进阶回溯与连通性（拉分关键）
+
+### 5️⃣ 电话号码字母组合（多叉树回溯）
+**题目描述**：数字字符串映射到字母，输出所有组合。
+**思路解析**：多个独立集合的组合，当前数字决定了下一层可以展开的字母分支。
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+string digits, path;
+vector<string> mapping = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+
+void dfs(int idx){
+    if(idx == digits.size()){ cout << path << "\n"; return; }
+    for(char c : mapping[digits[idx]-'0']){
+        path.push_back(c);
+        dfs(idx + 1);
+        path.pop_back();
+    }
+}
+
+int main(){
+    cin >> digits;
+    if(!digits.empty()) dfs(0);
+    return 0;
+}
+```
+
+### 6️⃣ 状态压缩搜索（开关问题 最少步数版）
+**题目描述**：$n$ 个开关，初始全关，每次翻转一个开关，求全部打开的最少步数。
+**思路解析**：将开关状态压缩为整数，利用异或 `^` 翻转状态。结合 BFS 寻找最少操作步数。
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int n;
+int dist[1<<20]; // 记录到达某状态的最少步数
+
+int bfs() {
+    memset(dist, -1, sizeof(dist));
+    queue<int> q;
+    
+    q.push(0); // 初始全 0
+    dist[0] = 0;
+    int target = (1 << n) - 1; // 目标全 1
+    
+    while(!q.empty()){
+        int state = q.front(); q.pop();
+        if(state == target) return dist[state];
+        
+        for(int i = 0; i < n; i++){
+            int next_state = state ^ (1 << i); // 翻转第 i 位
+            if(dist[next_state] == -1){
+                dist[next_state] = dist[state] + 1;
+                q.push(next_state);
+            }
+        }
+    }
+    return -1;
+}
+
+int main(){
+    cin >> n;
+    int ans = bfs();
+    if(ans != -1) cout << "YES " << ans << "\n";
+    else cout << "NO\n";
+    return 0;
+}
+```
+
+### 7️⃣ 连通块计数（Flood Fill 算法）
+**题目描述**：二进制矩阵 1 土地，0 水，求岛屿数量。
+**思路解析**：
+
+遍历矩阵，遇到未访问的 '1'，计数器加一，并启动 DFS 把相连的 '1' 全部染色标记。
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, m;
+char g[20][20];
+bool vis[20][20];
+int dx[4] = {0, 0, 1, -1}, dy[4] = {1, -1, 0, 0};
+
+void dfs(int x, int y){
+    vis[x][y] = true;
+    for(int i = 0; i < 4; i++){
+        int nx = x + dx[i], ny = y + dy[i];
+        if(nx >= 0 && nx < n && ny >= 0 && ny < m && g[nx][ny] == '1' && !vis[nx][ny])
+            dfs(nx, ny);
+    }
+}
+
+int main(){
+    cin >> n >> m;
+    for(int i = 0; i < n; i++) cin >> g[i];
+    int cnt = 0;
+    for(int i = 0; i < n; i++){
+        for(int j = 0; j < m; j++){
+            if(g[i][j] == '1' && !vis[i][j]){
+                cnt++;
+                dfs(i, j);
+            }
+        }
+    }
+    cout << cnt << "\n";
+    return 0;
+}
+```
+
+---
+
+## 🔴 第三阶段：强力剪枝与记忆化（防 TLE 杀手锏）
+
+### 8️⃣ 迷宫最少步数（DFS + 记忆化最优性剪枝）
+**题目描述**：迷宫求起点到终点最少步数（强制要求 DFS 写法）。
+**思路解析**：DFS 走迷宫极易超时。必须引入 `memo[x][y]` 记录到达该点的历史最小步数。如果当前步数大于等于历史记录，直接剪枝废弃。
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, ans = INT_MAX;
+char g[10][10];
+bool vis[10][10];
+int memo[10][10]; // 记忆化数组
+int dx[4] = {0, 0, 1, -1}, dy[4] = {1, -1, 0, 0};
+
+void dfs(int x, int y, int step){
+    // 强力剪枝：当前步数已经比到达该点的历史最优记录差，或比已知全局答案差
+    if(step >= ans || step >= memo[x][y]) return; 
+    
+    memo[x][y] = step; // 更新到达该点的最优步数
+    
+    if(x == n-1 && y == n-1){ ans = step; return; }
+    
+    for(int i = 0; i < 4; i++){
+        int nx = x + dx[i], ny = y + dy[i];
+        if(nx >= 0 && nx < n && ny >= 0 && ny < n && g[nx][ny] == '.' && !vis[nx][ny]){
+            vis[nx][ny] = true;
+            dfs(nx, ny, step + 1);
+            vis[nx][ny] = false;
+        }
+    }
+}
+
+int main(){
+    cin >> n;
+    for(int i = 0; i < n; i++) cin >> g[i];
+    for(int i = 0; i < n; i++) fill(memo[i], memo[i]+n, INT_MAX); // 初始化
+    
+    vis[0][0] = true;
+    dfs(0, 0, 0);
+    cout << ans << "\n";
+    return 0;
+}
+```
+
+### 9️⃣ 所有最短路径（BFS 探路 + DFS 收集）
+**题目描述**：迷宫，求起点到终点所有最短路径。
+**思路解析**：先 BFS 算出每个点到起点的最短距离 `dist`，DFS 寻找路径时严格要求 `dist[nx][ny] == step + 1`，只走“下坡路”，零废动作。
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, m;
+char g[10][10];
+int dx[4] = {0, 0, 1, -1}, dy[4] = {1, -1, 0, 0};
+int minStep;
+vector<pair<int,int>> path;
+int dist[10][10];
+
+bool inRange(int x, int y){ return x >= 0 && x < n && y >= 0 && y < m; }
+
+void bfs(){
+    memset(dist, -1, sizeof(dist));
+    queue<pair<int,int>> q;
+    q.push({0, 0});
+    dist[0][0] = 0;
+    while(!q.empty()){
+        auto [x, y] = q.front(); q.pop();
+        for(int i = 0; i < 4; i++){
+            int nx = x + dx[i], ny = y + dy[i];
+            if(inRange(nx, ny) && g[nx][ny] == '.' && dist[nx][ny] == -1){
+                dist[nx][ny] = dist[x][y] + 1;
+                q.push({nx, ny});
+            }
+        }
+    }
+    minStep = dist[n-1][m-1];
+}
+
+void dfs(int x, int y, int step){
+    path.push_back({x, y});
+    if(x == n-1 && y == m-1){
+        if(step == minStep){
+            for(auto &p : path) cout << "(" << p.first << "," << p.second << ") ";
+            cout << "\n";
+        }
+        path.pop_back();
+        return;
+    }
+    if(step >= minStep){ path.pop_back(); return; }
+    
+    for(int i = 0; i < 4; i++){
+        int nx = x + dx[i], ny = y + dy[i];
+        // 核心剪枝：只走最短路等高线
+        if(inRange(nx, ny) && g[nx][ny] == '.' && dist[nx][ny] == step + 1){
+            dfs(nx, ny, step + 1);
+        }
+    }
+    path.pop_back();
+}
+
+int main(){
+    cin >> n >> m;
+    for(int i = 0; i < n; i++) cin >> g[i];
+    bfs();
+    if(minStep != -1) dfs(0, 0, 0);
+    return 0;
+}
+```
+
+### 10️⃣ 拼数字方阵（DFS + 排序剪枝）
+**题目描述**：填入 $n^2$ 个数字，每行每列和相等。
+**思路解析**：核心优化是对输入数组进行**降序排序**，优先填大数字，极大减少搜索树的分支数。
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, targetSum, ans = 0;
+vector<int> nums;
+int colSum[5];
+bool used[20];
+
+void dfs(int row, int col, int sumRow){
+    if(row == n){ ans++; return; }
+    if(col == n){
+        if(sumRow == targetSum) dfs(row + 1, 0, 0);
+        return;
+    }
+    for(int i = 0; i < nums.size(); i++){
+        // 相同数字去重剪枝 (需确保已排序)
+        if(i > 0 && nums[i] == nums[i-1] && !used[i-1]) continue; 
+        
+        if(!used[i] && colSum[col] + nums[i] <= targetSum && sumRow + nums[i] <= targetSum){
+            used[i] = true;
+            colSum[col] += nums[i];
+            
+            dfs(row, col + 1, sumRow + nums[i]);
+            
+            colSum[col] -= nums[i];
+            used[i] = false;
+        }
+    }
+}
+
+int main(){
+    cin >> n;
+    nums.resize(n * n);
+    int sumAll = 0;
+    for(int i = 0; i < n * n; i++){ cin >> nums[i]; sumAll += nums[i]; }
+    
+    if(sumAll % n != 0){ cout << 0; return 0; }
+    targetSum = sumAll / n;
+    
+    // 关键优化：降序排序，优先大数字填坑
+    sort(nums.rbegin(), nums.rend()); 
+    
+    memset(colSum, 0, sizeof(colSum));
+    memset(used, 0, sizeof(used));
+    dfs(0, 0, 0);
+    cout << ans << "\n";
+    return 0;
+}
+```
+
+### 11️⃣ 最少硬币凑数（记忆化搜索 / 动态规划）
+**题目描述**：$n$ 种硬币（可重复），金额 $m$，求最少硬币数。
+**思路解析**：纯 DFS 会爆栈超时。引入 `memo` 数组记录凑出某个金额的最少硬币数，将复杂度从指数级降为 $O(n \times m)$。
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, m;
+vector<int> coins;
+int memo[10005]; // 记忆化数组
+
+int dfs(int sum) {
+    if(sum > m) return 1e9; // 无效状态
+    if(sum == m) return 0;  // 达成目标，需要 0 个额外硬币
+    if(memo[sum] != -1) return memo[sum]; // 命中缓存
+    
+    int min_coins = 1e9;
+    for(int i = 0; i < n; i++) {
+        min_coins = min(min_coins, dfs(sum + coins[i]) + 1);
+    }
+    return memo[sum] = min_coins; // 存入缓存
+}
+
+int main(){
+    cin >> n >> m;
+    coins.resize(n);
+    for(int i = 0; i < n; i++) cin >> coins[i];
+    
+    memset(memo, -1, sizeof(memo));
+    int ans = dfs(0);
+    
+    if(ans >= 1e9) cout << -1 << "\n";
+    else cout << ans << "\n";
+    return 0;
+}
+```
+
+### 12️⃣ 打印迷宫最长路径（DFS 纯暴搜）
+**题目描述**：求起点到终点的最长可走路径长度（不重复走）。
+**思路解析**：NP-Hard 问题，无法像最短路那样轻易剪枝。只能靠 DFS 老老实实回溯。确保 `vis = true` 后必须撤销为 `false`。
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, m, ans = 0;
+char g[10][10];
+bool vis[10][10];
+int dx[4] = {0, 0, 1, -1}, dy[4] = {1, -1, 0, 0};
+
+bool inRange(int x, int y){ return x >= 0 && x < n && y >= 0 && y < m; }
+
+void dfs(int x, int y, int step){
+    if(x == n-1 && y == m-1) {
+        ans = max(ans, step);
+        // 注意：找最长路这里不需要 return，因为可能绕一圈再到终点
+        // 但题目如果是“到终点就停止”，则加上 return
+    }
+    
+    for(int i = 0; i < 4; i++){
+        int nx = x + dx[i], ny = y + dy[i];
+        if(inRange(nx, ny) && g[nx][ny] == '.' && !vis[nx][ny]){
+            vis[nx][ny] = true;
+            dfs(nx, ny, step + 1);
+            vis[nx][ny] = false; // 必须回溯
+        }
+    }
+}
+
+int main(){
+    cin >> n >> m;
+    for(int i = 0; i < n; i++) cin >> g[i];
+    vis[0][0] = true;
+    dfs(0, 0, 0);
+    cout << ans << "\n";
+    return 0;
+}
+```
+
+---
